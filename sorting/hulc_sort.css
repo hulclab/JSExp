@@ -1,0 +1,69 @@
+/*
+HULC Sorting Task 1.0.0
+Licensed under GPL3: https://opensource.org/licenses/GPL-3.0
+*/
+@import	url('https://fonts.googleapis.com/css?family=Open+Sans:400,400i&subset=latin-ext');
+body {
+	margin: 0;
+	padding: 0;
+}
+.st_container {
+	margin: 0;
+	padding: 0;
+	width: 100vw;
+	height: 100vh;
+	text-align: center;
+	vertical-align: middle;
+	display: table-cell;
+	font-family: 'Open Sans';
+	font-size: 24pt;
+}
+.st_container > div, .st_container > img {
+	display: inline-block;
+	position: relative;
+	vertical-align: bottom;
+	margin: 1%;
+}
+.st_container > img {
+	z-index: 100;
+}
+.st_drag_target {
+	border: 2px solid #999;
+}
+.highlight {
+	box-shadow: 0px 0px 5px #000;
+}
+.color {
+	border-color: #006;
+	box-shadow: 0px 0px 5px #006;
+}
+p {
+	padding: 20px 50px;
+	margin: 30px;
+	font-size: 30pt;
+	font-weight: bold;
+}
+textarea {
+	font-family: 'Open Sans';
+	width: 40vw;
+	height: 50vh;
+}
+#trial_feedback {
+	width: 40vw;
+	height: 30vh;
+}
+button {
+	font-family: 'Open Sans';
+	font-size: 20pt;
+	padding: 20px 50px;
+	margin: 30px;
+}
+.st_frame {
+	position: relative;
+}
+.st_caption {
+	position: absolute;
+	top: 100%;
+	width: 100%;
+	text-align: center;
+}

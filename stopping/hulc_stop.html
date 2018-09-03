@@ -1,0 +1,50 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<!--
+HULC Stopping Task 1.0.0
+Licensed under GPL3: https://opensource.org/licenses/GPL-3.0
+-->
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en">
+	<head>
+		<meta charset="UTF-8">
+		<title>HULC Stopping Task</title>
+		<link href="hulc_stop.css" rel="stylesheet" type="text/css" />
+	</head>
+	<body>
+		<script type="text/javascript">
+			var experiment = {
+				blank_time: 1500,
+				//trial_sound: 'beep.mp3',
+				randomize: 'type',
+				target_width: 300,
+				target_height: 300,
+				trial_timer: 4000,
+				trial_feedback: true,
+				show_names: false,
+				img_path: '../assets/',
+				audio_path: '../assets/',
+				sequence: [
+					{name: 'welcome screen', action: 'display_text', text: 'Welcome to the experiment. <br /><br />Press space key to begin.'},
+					{name: 'instruction screen', action: 'display_text', text: 'Instructions. <br /><br />Press space key to continue.'},
+					{name: 'ready screen', action: 'display_text', text: 'Ready? <br /><br />Press space key to continue.'},
+					{action: 'trials'},
+					{name: 'end screen', action: 'display_text', text: 'End of experiment! Thank you for participating.'},
+					{action: 'output_result'},
+				],
+				trials: [
+					{id: 'trial_crit_1', type: 'crit1', images: ['img_01.jpg', 'img_02.jpg', 'img_03.jpg', 'img_04.jpg'], names: ['Map', 'Rice', 'Clownfish', 'Bird'], audio_cue: 'beep.mp3'},
+					{id: 'trial_crit_2', type: 'crit1', images: ['img_05.jpg', 'img_06.jpg', 'img_07.jpg', 'img_08.jpg'], names: ['Koi carp', 'Sushi', 'Beach', 'Gelato'], text_cue: 'Some cue', feedback_text: 'Some question'},
+					{id: 'trial_crit_3', type: 'crit1', images: ['img_09.jpg', 'img_10.jpg', 'img_11.jpg', 'img_12.jpg'], names: ['Stars', 'Dog', 'Lemon', 'Monk']},
+					{id: 'trial_crit_4', type: 'crit1', images: ['img_13.jpg', 'img_14.jpg', 'img_15.jpg', 'img_16.jpg'], names: ['Books', 'City', 'Sunset', 'Taxi']},
+					{id: 'trial_filler_1', type: 'filler', images: ['img_17.jpg', 'img_18.jpg', 'img_19.jpg', 'img_20.jpg'], names: ['Drawing', 'Lake', 'Baseball', 'Mountains']},
+					{id: 'trial_filler_2', type: 'filler', images: ['img_21.jpg', 'img_22.jpg', 'img_23.jpg', 'img_24.jpg'], names: ['Van', 'Canal', 'Macaque', 'Team meeting']},
+					{id: 'trial_filler_3', type: 'filler', images: ['img_25.jpg', 'img_26.jpg', 'img_27.jpg', 'img_28.jpg'], names: ['Mosque', 'Airplane', 'Rabbit', 'Ski']},
+					{id: 'trial_filler_4', type: 'filler', images: ['img_29.jpg', 'img_30.jpg', 'img_31.jpg', 'img_32.jpg'], names: ['Road', 'Bee', 'Gaming', 'Chess']},
+				],
+			};
+		</script>
+		<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+		<script src="https://cdnjs.cloudflare.com/ajax/libs/jqueryui/1.12.1/jquery-ui.js"></script>
+		<script src="https://cdnjs.cloudflare.com/ajax/libs/howler/2.0.9/howler.core.min.js"></script>
+		<script src="hulc_stop.js"></script>
+	</body>
+</html>
