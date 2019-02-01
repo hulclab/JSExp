@@ -1,0 +1,56 @@
+/*
+HULC Stopping Task 1.0.0
+Licensed under GPL3: https://opensource.org/licenses/GPL-3.0
+*/
+@import	url('https://fonts.googleapis.com/css?family=Open+Sans:400,400i&subset=latin-ext');
+body {
+	margin: 0;
+	padding: 0;
+}
+.st_container {
+	margin: 0;
+	padding: 0;
+	width: 100vw;
+	height: 100vh;
+	text-align: center;
+	vertical-align: middle;
+	display: table-cell;
+	font-family: 'Open Sans';
+	font-size: 24pt;
+}
+p {
+	padding: 20px 50px;
+	margin: 30px;
+	font-size: 30pt;
+	font-weight: bold;
+}
+textarea {
+	font-family: 'Open Sans';
+	width: 40vw;
+	height: 50vh;
+}
+#trial_feedback {
+	width: 40vw;
+	height: 30vh;
+}
+button {
+	font-family: 'Open Sans';
+	font-size: 20pt;
+	padding: 20px 50px;
+	margin: 30px;
+}
+.st_frame {
+	position: relative;
+}
+.st_caption {
+	position: absolute;
+	top: 100%;
+	width: 100%;
+	text-align: center;
+}
+.ui-slider {
+	margin: 5%;
+}
+.ui-state-active {
+	border: 1px solid #333;
+}

@@ -1,0 +1,53 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<!--
+HULC Slider Task 1.0.0
+Licensed under GPL3: https://opensource.org/licenses/GPL-3.0
+-->
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en">
+	<head>
+		<meta charset="UTF-8">
+		<title>HULC Slider Task</title>
+		<link href="https://cdnjs.cloudflare.com/ajax/libs/jqueryui/1.12.1/jquery-ui.min.css" rel="stylesheet" type="text/css" />
+		<link href="hulc_slider.css" rel="stylesheet" type="text/css" />
+	</head>
+	<body>
+		<script type="text/javascript">
+			var experiment = {
+				blank_time: 1500,
+				randomize: 'distance',
+				randomize_limit: 10,
+        randomize_distance: 3,
+        randomize_variable: 'type',
+				click_progression: true,
+				slider_color: '#007fff',
+				sequence: [
+					{name: 'welcome screen', action: 'display_text', text: 'Welcome to the experiment. <br /><br />Press space key to begin.'},
+					{name: 'instruction screen', action: 'display_text', text: 'Instructions. <br /><br />Press space key to continue.'},
+					{name: 'ready screen', action: 'display_text', text: 'Ready? <br /><br />Press space key to continue.'},
+					{action: 'trials'},
+					{name: 'end screen', action: 'display_text', text: 'End of experiment! Thank you for participating.'},
+					{action: 'output_result'},
+				],
+				trials: [
+					{"id": "trial_crit_1", "type": "crit1", "sentences": ["Sentence 1 is displayed here.", "Down here, sentence 2 is shown."]},
+					{"id": "trial_crit_2", "type": "crit1", "sentences": ["Sentence 3 is displayed here.", "Down here, sentence 4 is shown."]},
+					{"id": "trial_crit_3", "type": "crit2", "sentences": ["Sentence 5 is displayed here.", "Down here, sentence 6 is shown."]},
+					{"id": "trial_crit_4", "type": "crit2", "sentences": ["Sentence 5 is displayed here.", "Down here, sentence 6 is shown."]},
+					{"id": "trial_crit_5", "type": "crit3", "sentences": ["Sentence 1 is displayed here.", "Down here, sentence 2 is shown."]},
+					{"id": "trial_crit_6", "type": "crit3", "sentences": ["Sentence 3 is displayed here.", "Down here, sentence 4 is shown."]},
+					{"id": "trial_crit_7", "type": "crit4", "sentences": ["Sentence 5 is displayed here.", "Down here, sentence 6 is shown."]},
+					{"id": "trial_crit_8", "type": "crit4", "sentences": ["Sentence 5 is displayed here.", "Down here, sentence 6 is shown."]},
+					{"id": "trial_crit_9", "type": "crit5", "sentences": ["Sentence 5 is displayed here.", "Down here, sentence 6 is shown."]},
+					{"id": "trial_crit_10", "type": "crit5", "sentences": ["Sentence 5 is displayed here.", "Down here, sentence 6 is shown."]},
+					{"id": "trial_crit_11", "type": "crit6", "sentences": ["Sentence 5 is displayed here.", "Down here, sentence 6 is shown."]},
+					{"id": "trial_crit_12", "type": "crit6", "sentences": ["Sentence 5 is displayed here.", "Down here, sentence 6 is shown."]},
+				],
+			};
+		</script>
+		<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+		<script src="https://cdnjs.cloudflare.com/ajax/libs/jqueryui/1.12.1/jquery-ui.min.js"></script>
+		<script src="https://cdnjs.cloudflare.com/ajax/libs/jqueryui-touch-punch/0.2.3/jquery.ui.touch-punch.min.js"></script>
+		<script src="https://cdnjs.cloudflare.com/ajax/libs/howler/2.0.9/howler.core.min.js"></script>
+		<script src="hulc_slider.js"></script>
+	</body>
+</html>

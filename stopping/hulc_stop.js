@@ -7,7 +7,6 @@ var current_trial = -1;
 var current_action = false;
 var current_img_count = 0;
 var wait_keypress = false;
-var question = false;
 var trial_sound = false;
 var exp_result = '';
 var exp_time = 0;
@@ -36,8 +35,55 @@ function st_display_text(text, stop) {
 	}
 	wait_keypress = !stop;
 }
+
 function st_prepare_trials() {
 	switch (experiment.randomize) {
+    case 'distance':
+      if (experiment.randomize_distance && experiment.randomize_variable) {
+        var limit = parseInt(experiment.randomize_limit) || 100;
+        var repeat = 1;
+        while (repeat && repeat <= limit) {
+          repeat++;
+          var tmp = experiment.trials.slice(0);
+          var res = [];
+          var current_groups = {};
+          while(tmp.length) {
+            var valid = tmp.reduce(function(arr, v) {
+              if (!current_groups.hasOwnProperty(v[experiment.randomize_variable])) {
+                arr.push(v);
+              }
+              return arr;
+            }, []);
+            if (!valid.length) { // rest of array can't be used up, retry
+              break;
+            }
+            // get random element from valid array, remove from tmp array and add to res array
+            var element = valid[Math.floor((Math.random() * valid.length))];
+            tmp.splice(tmp.indexOf(element), 1);
+            res.push(element);
+            // reduce all current_groups counts and remove if <= 0, then add current group
+            for (let key of Object.keys(current_groups)) {
+              current_groups[key]--;
+              if (current_groups[key] <= 0) {
+                delete current_groups[key];
+              }
+      			}
+            current_groups[element[experiment.randomize_variable]] = experiment.randomize_distance;
+          }
+          if (tmp.length == 0) {
+            repeat = 0;
+          }
+        }
+        if (repeat) {
+          console.log('Pseudorandomization failed after ', limit, 'retries. Check your trials configuration!');
+          return false;
+        }
+        experiment.trials = res;
+      } else {
+        console.log('randomizer misconfiguration');
+        return false;
+      }
+      break;
 		case 'type':
 			var temp_trials = {};
 			while (experiment.trials.length) {
@@ -63,11 +109,6 @@ function st_prepare_trials() {
 				}
 				return arr;
 			}, []);
-			experiment.order = [];
-			for (let key of experiment.trials.keys()) {
-				experiment.order.push(experiment.trials[key].id);
-			}
-			experiment.order = experiment.order.join('\n');
 			break;
 		default:
 			if (experiment.randomize) {
@@ -75,7 +116,19 @@ function st_prepare_trials() {
 			}
 			break;
 	}
+  experiment.order = [];
+  for (let key of experiment.trials.keys()) {
+    experiment.order.push(experiment.trials[key].id);
+  }
+  experiment.order = experiment.order.join('\n');
+  if (experiment.trial_randomize) {
+    for (let key of experiment.trials.keys()) {
+      st_array_shuffle(experiment.trials[key].images);
+    }
+  }
+  return true;
 }
+
 function st_trial_next() {
 	var next = experiment.trials[current_trial];
 	if (next) {
@@ -118,16 +171,22 @@ function st_trial_start(next) {
   } else if (trial_sound) {
     trial_sound.play();
   }
-  st_trial_show_next();
+  $('#screen1').bind('click.STEvent', st_next);
+  st_trial_show_next(experiment.begin_with_two);
   wait_keypress = true;
 }
-function st_trial_show_next() {
+function st_trial_show_next(show_second) {
   if (trial_timer) {
     clearTimeout(trial_timer);
   }
   exp_result += timestamp(null, true) + " display " + $('.st_frame').filter(function() {
     return $(this).css('visibility') == 'hidden';
   }).first().css("visibility", "visible").attr('id') +"\n";
+  if (show_second) {
+    exp_result += timestamp(null, true) + " display " + $('.st_frame').filter(function() {
+      return $(this).css('visibility') == 'hidden';
+    }).first().css("visibility", "visible").attr('id') +"\n";
+  }
   if ($('.st_frame').filter(function() {
     return $(this).css('visibility') == 'hidden';
   }).length) {
@@ -135,6 +194,7 @@ function st_trial_show_next() {
   }
 }
 function st_trial_end(wait_complete) {
+  $('#screen1').unbind('click.STEvent');
   if (trial_timer) {
     clearTimeout(trial_timer);
   }
@@ -151,7 +211,7 @@ function st_trial_end(wait_complete) {
     if (experiment.trial_feedback) {
       $('#screen1').empty();
       $('#screen1').append((feedback_text ? feedback_text + '<br />' : '')+'<textarea id="trial_feedback"></textarea><br />');
-      $('#screen1').append($('<button class="st_trial_button" onClick="st_trial_end(true)">'+(experiment.trial_button || 'Done')+'</button>'));
+      $('#screen1').append($('<button class="st_trial_button">'+(experiment.trial_button || 'Done')+'</button>').bind('click', function(e){st_trial_end(true);e.stopPropagation();}));
       $('#screen1').show();
     } else {
       setTimeout(st_trial_end, experiment.blank_time || 100, true);
@@ -179,7 +239,7 @@ function st_next() {
 			break;
 		case 'trials':
 			if (current_trial >= 0) {
-				st_trial_end(question);
+				st_trial_end();
 			}
 			break;
     case 'output_result':
@@ -237,7 +297,10 @@ function st_start_experiment() {
 	current_index = 0;
 	current_trial = -1;
 	current_action = false;
-	st_prepare_trials();
+  if (!st_prepare_trials()){
+    $('#screen0').html('<p>Experiment initialization failed!<br />Check your configuration and retry. <br />(Console may contain additional information)</p>');
+    return false;
+  }
   exp_time = Date.now();
   exp_result = new Date().toLocaleString() + " experiment start\n";
 	st_next();
@@ -259,7 +322,8 @@ $(document).ready(function(){
 			trial_sound = new Howl({src: sources});
 		}
 		if ($('#screen0')) {
-			$('#screen0').html($('<p>Click to start experiment</p>').click(function (){
+      var start_msg = experiment.start_msg || 'Click to start experiment';
+			$('#screen0').html($('<p>'+start_msg+'</p>').click(function (){
 				st_start_experiment();
 			})).show();
 		}

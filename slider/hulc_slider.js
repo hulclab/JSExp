@@ -1,5 +1,5 @@
 /*
-HULC Sorting Task 1.0.0
+HULC Stopping Task 1.0.0
 Licensed under GPL3: https://opensource.org/licenses/GPL-3.0
 */
 var current_index = 0;
@@ -7,11 +7,11 @@ var current_trial = -1;
 var current_action = false;
 var current_img_count = 0;
 var wait_keypress = false;
-var question = false;
 var trial_sound = false;
 var exp_result = '';
 var exp_time = 0;
 var trial_time = 0;
+var trial_timer = null;
 function st_array_shuffle(array) {
   var i = 0, j = 0, temp = null;
   for (i = array.length - 1; i > 0; i -= 1) {
@@ -35,7 +35,6 @@ function st_display_text(text, stop) {
 	}
 	wait_keypress = !stop;
 }
-
 function st_prepare_trials() {
 	switch (experiment.randomize) {
     case 'distance':
@@ -70,7 +69,7 @@ function st_prepare_trials() {
       			}
             current_groups[element[experiment.randomize_variable]] = experiment.randomize_distance;
           }
-          if (tmp.length == 0) {
+          if (tmp.length == 0) { // used up tmp array => success! otherwise retry
             repeat = 0;
           }
         }
@@ -79,6 +78,7 @@ function st_prepare_trials() {
           return false;
         }
         experiment.trials = res;
+        // console.log(res);
       } else {
         console.log('randomizer misconfiguration');
         return false;
@@ -131,58 +131,27 @@ function st_prepare_trials() {
 
 function st_trial_next() {
 	var next = experiment.trials[current_trial];
+  var slider_options = {
+    range: "min",
+    value: 1,
+    min: 1,
+    max: 1500,
+    slide: function() {
+      $('.st_trial_button').prop("disabled", false);
+    }
+  };
 	if (next) {
-    current_img_count = next.images.length;
-    var drag_param = {
-      containment: "parent",
-      cursor: "move",
-      snap: ".st_drag_target",
-      snapMode: "inner",
-      revert: "invalid",
-      snapTolerance: 150,
-      start: function( event, ui ) {
-        exp_result += timestamp(null, true) + " drag "+ui.helper.attr('id')+" start\n";
-      },
-      stop: function( event, ui ) {
-        exp_result += timestamp(null, true) + " drag "+ui.helper.attr('id')+" stop\n";
-      }
-    };
-    var drop_param = {
-      classes: {"ui-droppable-active": "highlight", "ui-droppable-hover": "color"},
-      tolerance: "fit",
-      drop: function(event, ui){
-        exp_result += timestamp(null, true) + " drop "+ui.draggable.attr('id')+" on "+$(this).attr('id')+"\n";
-        $(this).children().detach().prependTo($(this).parent());
-        $(this).append(ui.draggable);
-        $(ui.draggable[0]).css({top: 0, left: 0})
-        st_trial_complete();
-      },
-    };
     $('#screen1').empty();
-    if (next.text_cue_top) {
-        $('#screen1').append('<p>'+next.text_cue_top+'</p>');
-    }
-    for (let key of next.images.keys()) {
-      if (next.names && next.names[key]) {
-        if (experiment.show_names) {
-          $('#screen1').append($('<div class="st_frame" id="'+next.names[key]+'"><img src="'+(experiment.img_path || '')+next.images[key]+'" title="'+next.names[key]+'"/><div class="st_caption">'+next.names[key]+'</div></div>').draggable(drag_param));
-        } else {
-          $('#screen1').append($('<img src="'+(experiment.img_path || '')+next.images[key]+'" id="'+next.names[key]+'" title="'+next.names[key]+'"/>').draggable(drag_param));
-        }
-      } else {
-        $('#screen1').append($('<img src="'+(experiment.img_path || '')+next.images[key]+'" id="'+next.images[key]+'" />').draggable(drag_param));
-      }
-    }
-    if (next.text_cue) {
-      $('#screen1').append('<p>'+next.text_cue+'</p>');
-    } else {
-      $('#screen1').append('<br />');
-    }
-    for (let key of next.images.keys()) {
-      $('#screen1').append($('<div class="st_drag_target" id="slot_'+key+'" style="width: '+experiment.target_width+'px; height: '+experiment.target_height+'px;">').droppable(drop_param));
-    }
+    $('#screen1').append('<p>'+next.sentences[0]+'<span id="amount"></span></p>');
+    $('#screen1').append($('<div id="slider0"></div>').slider(slider_options));
+    $('#screen1').append('<p>'+next.sentences[1]+'</p>');
+    $('#screen1').append($('<div id="slider1"></div>').slider(slider_options));
+    $('#screen1').append($('<button class="st_trial_button" onClick="st_next()">'+(experiment.trial_button || 'Done')+'</button>').prop("disabled", true));
     $('#screen1').append('<br />');
-    $('#screen1').append($('<button class="st_trial_button" onClick="st_next()">'+(experiment.trial_button || 'Done')+'</button>').prop("disabled",true));
+    if (experiment.slider_color) {
+      $('.ui-widget-header').css('background', experiment.slider_color);
+      $('.ui-state-active').css('background', experiment.slider_color);
+    }
     if (next.audio_cue) {
   		var sources = Array.isArray(next.audio_cue) ? next.audio_cue.map(function(e){return (experiment.audio_path || '')+e;}) : [(experiment.audio_path || '')+next.audio_cue];
   		trial_cue = new Howl({src: sources, onload: function(){st_trial_start(next);}});
@@ -205,37 +174,28 @@ function st_trial_start(next) {
   } else if (trial_sound) {
     trial_sound.play();
   }
-  wait_keypress = true;
 }
-function st_trial_complete()  {
-  if ($('.st_drag_target').children().length == current_img_count) {
-    $('.st_trial_button').prop("disabled",false);
-    return true;
-  } else {
-    $('.st_trial_button').prop("disabled",true);
-    return false;
-  }
-}
-
 function st_trial_end(wait_complete) {
+  if (trial_timer) {
+    clearTimeout(trial_timer);
+  }
   feedback_text = experiment.trials[current_trial].feedback_text;
 	if (wait_complete) {
-    if (experiment.trial_feedback && (!experiment.trial_feedback_require_text || feedback_text) && $('#trial_feedback')) {
+    if (experiment.trial_feedback && $('#trial_feedback')) {
       exp_result += timestamp(null, true) + " trial "+(current_trial + 1)+" feedback"+(feedback_text ? ' ('+feedback_text + ')' : '')+": "+$('#trial_feedback').val().trim()+"\n";
     }
 		current_trial++;
 		st_trial_next();
 	} else {
+    if ($('#slider0').slider("value") && $('#slider1').slider("value")) {
+      exp_result += "sentence 1:\t"+$('#slider0').slider("value")+"\nsentence 2:\t"+$('#slider1').slider("value")+"\n";
+    }
 		$('#screen1').hide();
-    current_answer = [];
-    $('.st_drag_target').each(function(i){
-      current_answer.push($(this).attr('id')+"->"+$(this).children().attr('id'));
-    });
-    exp_result += timestamp(null, true) + " trial "+(current_trial + 1)+" end\nresult: "+current_answer.join(', ')+"\n";
-    if (experiment.trial_feedback && (!experiment.trial_feedback_require_text || feedback_text)) {
+    exp_result += timestamp(null, true) + " trial "+(current_trial + 1)+" end\n";
+    if (experiment.trial_feedback) {
       $('#screen1').empty();
       $('#screen1').append((feedback_text ? feedback_text + '<br />' : '')+'<textarea id="trial_feedback"></textarea><br />');
-      $('#screen1').append($('<button class="st_trial_button" onClick="st_trial_end(true)">'+(experiment.trial_button || 'Done')+'</button>'));
+      $('#screen1').append($('<button class="st_trial_button">'+(experiment.trial_button || 'Done')+'</button>').bind('click', function(e){st_trial_end(true);e.stopPropagation();}));
       $('#screen1').show();
     } else {
       setTimeout(st_trial_end, experiment.blank_time || 100, true);
@@ -263,7 +223,7 @@ function st_next() {
 			break;
 		case 'trials':
 			if (current_trial >= 0) {
-				st_trial_end(question);
+				st_trial_end();
 			}
 			break;
     case 'output_result':
@@ -278,11 +238,12 @@ function st_next() {
 				st_display_text(next.text);
 				break;
 			case 'output_result':
-        exp_result += timestamp() + " experiment end\n";
+				exp_result += timestamp() + " experiment end\n";
 				st_display_text('experiment log<br /><br /><textarea onclick="this.select();">Trial order:\n'+experiment.order+'\n\n'+exp_result+'</textarea><p onClick="skip_output();">Done</p>', true);
 				break;
 			case 'trials':
 				if (current_trial < 0) {
+          exp_result += timestamp() + " sequence "+current_index+": "+(next.name || current_action)+"\n";
 					current_trial = 0;
 					st_trial_next();
 				}
@@ -338,11 +299,17 @@ $(document).ready(function(){
       st_break();
     }
 	});
+  $('body').click(function (e) {
+		if (experiment.click_progression && wait_keypress) {
+			st_next();
+			e.preventDefault();
+    }
+	});
 	if (experiment) {
     $('body').append($('<div id="screen0" class="st_container">').hide());
     $('body').append($('<div id="screen1" class="st_container">').hide());
 		if (experiment.trial_sound) {
-      var sources = Array.isArray(experiment.trial_sound) ? experiment.trial_sound.map(function(e){return (experiment.audio_path || '')+e;}): [(experiment.audio_path || '')+experiment.trial_sound];
+			var sources = Array.isArray(experiment.trial_sound) ? experiment.trial_sound.map(function(e){return (experiment.audio_path || '')+e;}): [(experiment.audio_path || '')+experiment.trial_sound];
 			trial_sound = new Howl({src: sources});
 		}
 		if ($('#screen0')) {
