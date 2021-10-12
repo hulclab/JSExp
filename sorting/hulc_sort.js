@@ -205,11 +205,11 @@ function st_trial_start(next) {
   } else if (trial_sound) {
     trial_sound.play();
   }
-  wait_keypress = true;
+  // wait_keypress = true;
 }
 function st_trial_complete()  {
   if ($('.st_drag_target').children().length == current_img_count) {
-    $('.st_trial_button').prop("disabled",false);
+    $('.st_trial_button').prop("disabled",false).focus();
     return true;
   } else {
     $('.st_trial_button').prop("disabled",true);
@@ -237,6 +237,7 @@ function st_trial_end(wait_complete) {
       $('#screen1').append((feedback_text ? feedback_text + '<br />' : '')+'<textarea id="trial_feedback"></textarea><br />');
       $('#screen1').append($('<button class="st_trial_button" onClick="st_trial_end(true)">'+(experiment.trial_button || 'Done')+'</button>'));
       $('#screen1').show();
+      $('#trial_feedback').focus();
     } else {
       setTimeout(st_trial_end, experiment.blank_time || 100, true);
     }
@@ -279,7 +280,7 @@ function st_next() {
 				break;
 			case 'output_result':
         exp_result += timestamp() + " experiment end\n";
-				st_display_text('experiment log<br /><br /><textarea onclick="this.select();">Trial order:\n'+experiment.order+'\n\n'+exp_result+'</textarea><p onClick="skip_output();">Done</p>', true);
+				st_display_text('experiment log<br /><br /><textarea id="experient_result" onclick="this.select();">Trial order:\n'+experiment.order+'\n\n'+exp_result+'</textarea><br /><button class="st_trial_button" onClick="st_feedback_copy()">Copy</button>', true);
 				break;
 			case 'trials':
 				if (current_trial < 0) {
@@ -329,6 +330,20 @@ function st_start_experiment() {
   exp_result = new Date().toLocaleString() + " experiment start\n";
 	st_next();
 }
+function st_feedback_copy() {
+  if ($('#experient_result').length) {
+    $('#experient_result').focus();
+    $('#experient_result').select();
+    try {
+      if (document.execCommand('copy'))
+      alert('Result copied to clipboard');
+    } catch (err) {
+      alert('Error copying result to clipboard');
+      console.log(err);
+    }
+  }
+}
+
 $(document).ready(function(){
 	$('body').keypress(function (e) {
 		if (e.which == 32 && wait_keypress) {
@@ -336,6 +351,12 @@ $(document).ready(function(){
 			e.preventDefault();
 		} else if (e.key == 'Pause') {
       st_break();
+    }
+	});
+  $('body').click(function (e) {
+		if (wait_keypress) {
+			st_next();
+			e.preventDefault();
     }
 	});
 	if (experiment) {
