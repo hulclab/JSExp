@@ -35,55 +35,8 @@ function st_display_text(text, stop) {
 	}
 	wait_keypress = !stop;
 }
-
 function st_prepare_trials() {
 	switch (experiment.randomize) {
-    case 'distance':
-      if (experiment.randomize_distance && experiment.randomize_variable) {
-        var limit = parseInt(experiment.randomize_limit) || 100;
-        var repeat = 1;
-        while (repeat && repeat <= limit) {
-          repeat++;
-          var tmp = experiment.trials.slice(0);
-          var res = [];
-          var current_groups = {};
-          while(tmp.length) {
-            var valid = tmp.reduce(function(arr, v) {
-              if (!current_groups.hasOwnProperty(v[experiment.randomize_variable])) {
-                arr.push(v);
-              }
-              return arr;
-            }, []);
-            if (!valid.length) { // rest of array can't be used up, retry
-              break;
-            }
-            // get random element from valid array, remove from tmp array and add to res array
-            var element = valid[Math.floor((Math.random() * valid.length))];
-            tmp.splice(tmp.indexOf(element), 1);
-            res.push(element);
-            // reduce all current_groups counts and remove if <= 0, then add current group
-            for (let key of Object.keys(current_groups)) {
-              current_groups[key]--;
-              if (current_groups[key] <= 0) {
-                delete current_groups[key];
-              }
-      			}
-            current_groups[element[experiment.randomize_variable]] = experiment.randomize_distance;
-          }
-          if (tmp.length == 0) {
-            repeat = 0;
-          }
-        }
-        if (repeat) {
-          console.log('Pseudorandomization failed after ', limit, 'retries. Check your trials configuration!');
-          return false;
-        }
-        experiment.trials = res;
-      } else {
-        console.log('randomizer misconfiguration');
-        return false;
-      }
-      break;
 		case 'type':
 			var temp_trials = {};
 			while (experiment.trials.length) {
@@ -109,6 +62,16 @@ function st_prepare_trials() {
 				}
 				return arr;
 			}, []);
+			experiment.order = [];
+			for (let key of experiment.trials.keys()) {
+				experiment.order.push(experiment.trials[key].id);
+			}
+			experiment.order = experiment.order.join('\n');
+      if (experiment.trial_randomize) {
+        for (let key of experiment.trials.keys()) {
+          st_array_shuffle(experiment.trials[key].images);
+        }
+      }
 			break;
 		default:
 			if (experiment.randomize) {
@@ -116,19 +79,7 @@ function st_prepare_trials() {
 			}
 			break;
 	}
-  experiment.order = [];
-  for (let key of experiment.trials.keys()) {
-    experiment.order.push(experiment.trials[key].id);
-  }
-  experiment.order = experiment.order.join('\n');
-  if (experiment.trial_randomize) {
-    for (let key of experiment.trials.keys()) {
-      st_array_shuffle(experiment.trials[key].images);
-    }
-  }
-  return true;
 }
-
 function st_trial_next() {
 	var next = experiment.trials[current_trial];
 	if (next) {
@@ -213,6 +164,7 @@ function st_trial_end(wait_complete) {
       $('#screen1').append((feedback_text ? feedback_text + '<br />' : '')+'<textarea id="trial_feedback"></textarea><br />');
       $('#screen1').append($('<button class="st_trial_button">'+(experiment.trial_button || 'Done')+'</button>').bind('click', function(e){st_trial_end(true);e.stopPropagation();}));
       $('#screen1').show();
+      $('#trial_feedback').focus();
     } else {
       setTimeout(st_trial_end, experiment.blank_time || 100, true);
     }
@@ -255,7 +207,7 @@ function st_next() {
 				break;
 			case 'output_result':
 				exp_result += timestamp() + " experiment end\n";
-				st_display_text('experiment log<br /><br /><textarea onclick="this.select();">Trial order:\n'+experiment.order+'\n\n'+exp_result+'</textarea><p onClick="skip_output();">Done</p>', true);
+				st_display_text('experiment log<br /><br /><textarea id="experient_result" onclick="this.select();">Trial order:\n'+experiment.order+'\n\n'+exp_result+'</textarea><br /><button class="st_trial_button" onClick="st_feedback_copy()">Copy</button>', true);
 				break;
 			case 'trials':
 				if (current_trial < 0) {
@@ -297,14 +249,25 @@ function st_start_experiment() {
 	current_index = 0;
 	current_trial = -1;
 	current_action = false;
-  if (!st_prepare_trials()){
-    $('#screen0').html('<p>Experiment initialization failed!<br />Check your configuration and retry. <br />(Console may contain additional information)</p>');
-    return false;
-  }
+	st_prepare_trials();
   exp_time = Date.now();
   exp_result = new Date().toLocaleString() + " experiment start\n";
 	st_next();
 }
+function st_feedback_copy() {
+  if ($('#experient_result').length) {
+    $('#experient_result').focus();
+    $('#experient_result').select();
+    try {
+      if (document.execCommand('copy'))
+      alert('Result copied to clipboard');
+    } catch (err) {
+      alert('Error copying result to clipboard');
+      console.log(err);
+    }
+  }
+}
+
 $(document).ready(function(){
 	$('body').keypress(function (e) {
 		if (e.which == 32 && wait_keypress) {
@@ -312,6 +275,12 @@ $(document).ready(function(){
 			e.preventDefault();
 		} else if (e.key == 'Pause') {
       st_break();
+    }
+	});
+  $('body').click(function (e) {
+		if (wait_keypress) {
+			st_next();
+			e.preventDefault();
     }
 	});
 	if (experiment) {
@@ -322,8 +291,7 @@ $(document).ready(function(){
 			trial_sound = new Howl({src: sources});
 		}
 		if ($('#screen0')) {
-      var start_msg = experiment.start_msg || 'Click to start experiment';
-			$('#screen0').html($('<p>'+start_msg+'</p>').click(function (){
+			$('#screen0').html($('<p>Click to start experiment</p>').click(function (){
 				st_start_experiment();
 			})).show();
 		}

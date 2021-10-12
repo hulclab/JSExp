@@ -22,7 +22,7 @@ body {
 	display: inline-block;
 	position: relative;
 	vertical-align: bottom;
-	margin: 1%;
+	margin: 5px;
 }
 p {
 	padding: 20px 50px;
@@ -53,4 +53,7 @@ button {
 	top: 100%;
 	width: 100%;
 	text-align: center;
+}
+#trial_feedback {
+    font-size: 20pt;
 }
